@@ -105,6 +105,8 @@ class Meja_Booking_Plugin {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-meja-booking-plugin-loader.php';
 
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/database-loader.php';
+
 		/**
 		 * The class responsible for defining internationalization functionality
 		 * of the plugin.

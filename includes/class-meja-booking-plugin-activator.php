@@ -22,15 +22,55 @@
  */
 class Meja_Booking_Plugin_Activator {
 
-	/**
-	 * Short Description. (use period)
-	 *
-	 * Long Description.
-	 *
-	 * @since    1.0.0
-	 */
 	public static function activate() {
+		global $wpdb;
 
+		$charset_collate = $wpdb->get_charset_collate();
+
+		// Nama tabel (otomatis prefiksinya, misal wp_)
+		$table_meja   = $wpdb->prefix . 'meja_tables';
+		$table_menu   = $wpdb->prefix . 'meja_menus';
+		$table_order  = $wpdb->prefix . 'meja_orders';
+
+		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+
+		// SQL buat meja
+		$sql_meja = "CREATE TABLE $table_meja (
+			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			number VARCHAR(50) NOT NULL,
+			qr_code_url TEXT,
+			status ENUM('available', 'occupied') DEFAULT 'available',
+			PRIMARY KEY (id)
+		) $charset_collate;";
+
+		// SQL buat menu
+		$sql_menu = "CREATE TABLE $table_menu (
+			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			name VARCHAR(255) NOT NULL,
+			description TEXT,
+			price DECIMAL(10,2) NOT NULL,
+			image_url TEXT,
+			category VARCHAR(100),
+			status ENUM('available', 'sold_out') DEFAULT 'available',
+			PRIMARY KEY (id)
+		) $charset_collate;";
+
+		// SQL buat order
+		$sql_order = "CREATE TABLE $table_order (
+			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			table_id BIGINT(20) UNSIGNED NOT NULL,
+			order_details LONGTEXT NOT NULL, -- JSON
+			total_price DECIMAL(10,2) NOT NULL,
+			status ENUM('pending', 'preparing', 'served', 'completed', 'cancelled') DEFAULT 'pending',
+			order_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (table_id) REFERENCES $table_meja(id) ON DELETE CASCADE,
+			PRIMARY KEY (id)
+		) $charset_collate;";
+
+		// Jalankan pembuatan tabel
+		dbDelta($sql_meja);
+		dbDelta($sql_menu);
+		dbDelta($sql_order);
 	}
-
 }
+
