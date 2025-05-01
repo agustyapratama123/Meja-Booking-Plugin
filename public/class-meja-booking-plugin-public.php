@@ -51,27 +51,21 @@ class Meja_Booking_Plugin_Public {
 
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
+		add_action('wp_ajax_nopriv_meja_booking_route', [$this, 'ajax_router']);
+     	add_action('wp_ajax_meja_booking_route', [$this, 'ajax_router']);
+		add_shortcode('meja_booking_app', [$this, 'render_booking_shortcode']);
 
+	 	// Start session if not already
+	 	add_action('init', [$this, 'start_session']);
 	}
 
+   
 	/**
 	 * Register the stylesheets for the public-facing side of the site.
 	 *
 	 * @since    1.0.0
 	 */
 	public function enqueue_styles() {
-
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in Meja_Booking_Plugin_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The Meja_Booking_Plugin_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
 
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/meja-booking-plugin-public.css', array(), $this->version, 'all' );
 
@@ -84,20 +78,82 @@ class Meja_Booking_Plugin_Public {
 	 */
 	public function enqueue_scripts() {
 
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in Meja_Booking_Plugin_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The Meja_Booking_Plugin_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
-
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/meja-booking-plugin-public.js', array( 'jquery' ), $this->version, false );
-
+		wp_enqueue_script(
+			'meja-booking',
+			plugin_dir_url(__FILE__) . 'js/meja-booking.js',
+			['jquery'],
+			'1.0',
+			true
+		);
+	
+		wp_localize_script('meja-booking', 'MejaBookingData', [
+			'ajax_url' => admin_url('admin-ajax.php'),
+			'nonce'    => wp_create_nonce('meja_booking_ajax'),
+		]);
 	}
 
+	public function start_session() {
+        if (!session_id()) {
+            session_start();
+        }
+    }
+
+	public function ajax_router() {
+		check_ajax_referer('meja_booking_ajax', 'nonce');
+	
+		$step = isset($_POST['step']) ? sanitize_text_field($_POST['step']) : 'form';
+	
+		// Handle form input saving
+        $this->handle_form_submission($step);
+
+		ob_start();
+		switch ($step) {
+			case 'form':
+				include plugin_dir_path(__FILE__) . 'views/form-nama-meja.php';
+				break;
+			case 'menu':
+				include plugin_dir_path(__FILE__) . 'views/menu-pilihan.php';
+				break;
+			case 'cart':
+				include plugin_dir_path(__FILE__) . 'views/keranjang.php';
+				break;
+			default:
+				echo '<p>Halaman tidak ditemukan</p>';
+		}
+	
+		wp_send_json_success([
+			'html' => ob_get_clean(),
+		]);
+	}
+
+	private function handle_form_submission($step) {
+		switch ($step) {
+			case 'menu':
+				// Step 1 submitted → simpan nama & nomor meja
+				if (!empty($_POST['customer_name']) && !empty($_POST['meja_id'])) {
+					$_SESSION['meja_booking']['customer_name'] = sanitize_text_field($_POST['customer_name']);
+					$_SESSION['meja_booking']['meja_id'] = intval($_POST['meja_id']);
+				}
+				break;
+	
+			case 'cart':
+				// Step 2 submitted → simpan daftar menu (dalam bentuk array atau string)
+				if (!empty($_POST['menu_ids'])) {
+					$_SESSION['meja_booking']['menu_ids'] = sanitize_text_field($_POST['menu_ids']);
+				}
+				break;
+	
+			case 'checkout':
+				// Simulasi checkout → bersihkan session
+				unset($_SESSION['meja_booking']);
+				break;
+		}
+	}
+ 	
+	public function render_booking_shortcode($atts) {
+		return '<div id="meja-booking-app"></div>';
+	}
+	
+	
 }
