@@ -30,7 +30,8 @@ class Meja_Booking_Plugin_Deactivator {
 	 * @since    1.0.0
 	 */
 	public static function deactivate() {
-
+		remove_role('admin_resto');
+		remove_role('pembeli');
 	}
 
 }

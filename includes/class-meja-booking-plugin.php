@@ -175,6 +175,12 @@ class Meja_Booking_Plugin {
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
+		$this->loader->add_action( 'admin_init', $plugin_public, 'restrict_admin_for_resto' ); // Batasi role admin_resto mengakses dashboard wp-admin
+		$this->loader->add_filter( 'login_redirect', $plugin_public, 'restrict_admin_for_resto', 10, 3 ); // redirect role admin_resto ke dashboard custom
+		// $this->loader->add_action( 'init', $plugin_public, 'register_shortcodes' ); // membuat custom dashboard untuk role admin_resto
+
+
+		
 
 	}
 

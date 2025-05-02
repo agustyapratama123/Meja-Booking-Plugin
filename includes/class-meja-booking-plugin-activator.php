@@ -71,6 +71,21 @@ class Meja_Booking_Plugin_Activator {
 		dbDelta($sql_meja);
 		dbDelta($sql_menu);
 		dbDelta($sql_order);
+
+
+		// Membuat custom role
+		add_role('admin_resto', 'Admin Resto', [
+			'read'           => true,
+			'edit_posts'     => false,
+			'manage_options' => true, // bisa akses wp-admin
+			'meja_manage'    => true, // custom capability untuk fitur plugin
+		]);
+	
+		// Role: Pembeli
+		add_role('pembeli', 'Pembeli', [
+			'read'       => true,
+			'meja_order' => true, // custom capability untuk melakukan order
+		]);
 	}
 }
 

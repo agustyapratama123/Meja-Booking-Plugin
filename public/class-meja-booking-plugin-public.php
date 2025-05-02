@@ -54,6 +54,7 @@ class Meja_Booking_Plugin_Public {
 		add_action('wp_ajax_nopriv_meja_booking_route', [$this, 'ajax_router']);
      	add_action('wp_ajax_meja_booking_route', [$this, 'ajax_router']);
 		add_shortcode('meja_booking_app', [$this, 'render_booking_shortcode']);
+		add_shortcode('resto_dashboard', [$this, 'render_resto_dashboard']);
 
 	 	// Start session if not already
 	 	add_action('init', [$this, 'start_session']);
@@ -154,6 +155,42 @@ class Meja_Booking_Plugin_Public {
 	public function render_booking_shortcode($atts) {
 		return '<div id="meja-booking-app"></div>';
 	}
+
+	public function restrict_admin_for_resto() {
+		if (
+			is_user_logged_in() &&
+			current_user_can('admin_resto') &&
+			!current_user_can('administrator') &&
+			is_admin() &&
+			!defined('DOING_AJAX')
+		) {
+			wp_redirect(home_url('/resto-dashboard'));
+			exit;
+		}
+	}
+	
+
+	public function login_redirect($redirect_to, $request, $user) {
+		if (isset($user->roles) && in_array('admin_resto', $user->roles)) {
+			return home_url('/resto-dashboard');
+		}
+		return $redirect_to;
+	}
+	
+	// public function register_shortcodes() {
+	// 	add_shortcode('resto_dashboard', [$this, 'render_resto_dashboard']);
+	// }
+
+	public function render_resto_dashboard() {
+		if (!current_user_can('admin_resto')) {
+			return '<p>Akses ditolak.</p>';
+		}
+	
+		ob_start();
+		include plugin_dir_path(__FILE__) . 'views/dashboard-resto.php';
+		return ob_get_clean();
+	}
+	
 	
 	
 }
