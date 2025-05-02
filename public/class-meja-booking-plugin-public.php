@@ -92,6 +92,17 @@ class Meja_Booking_Plugin_Public {
 			'ajax_url' => admin_url('admin-ajax.php'),
 			'nonce'    => wp_create_nonce('meja_booking_ajax'),
 		]);
+
+		if (is_page('resto-dashboard')) {
+			wp_enqueue_script(
+				'meja-dashboard-router',
+				plugin_dir_url(__FILE__) . 'js/dashboard-router.js',
+				['jquery'],
+				$this->version,
+				true
+			);
+		}
+		
 	}
 
 	public function start_session() {
@@ -190,7 +201,43 @@ class Meja_Booking_Plugin_Public {
 		include plugin_dir_path(__FILE__) . 'views/dashboard-resto.php';
 		return ob_get_clean();
 	}
+
+	function meja_booking_force_template($template) {
+		if (is_page('resto-dashboard')) {
+			return plugin_dir_path(__FILE__) . 'templates/resto-dashboard-template.php';
+		}
+		return $template;
+	}
 	
+	public function ajax_dashboard_router() {
+		check_ajax_referer('meja_booking_ajax', 'nonce');
+	
+		if (!current_user_can('admin_resto')) {
+			wp_send_json_error(['message' => 'Akses ditolak.']);
+		}
+	
+		$page = isset($_POST['page']) ? sanitize_text_field($_POST['page']) : 'home';
+	
+		ob_start();
+	
+		switch ($page) {
+			case 'home':
+				include plugin_dir_path(__FILE__) . 'views/dashboard/home.php';
+				break;
+			case 'orders':
+				include plugin_dir_path(__FILE__) . 'views/dashboard/orders.php';
+				break;
+			case 'profile':
+				include plugin_dir_path(__FILE__) . 'views/dashboard/profile.php';
+				break;
+			default:
+				echo '<p>Halaman dashboard tidak ditemukan.</p>';
+		}
+	
+		wp_send_json_success([
+			'html' => ob_get_clean(),
+		]);
+	}
 	
 	
 }
