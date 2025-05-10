@@ -86,6 +86,30 @@ class Meja_Booking_Plugin_Activator {
 			'read'       => true,
 			'meja_order' => true, // custom capability untuk melakukan order
 		]);
+
+
+
+		// create custom login page
+
+		if (!get_page_by_path('dashboard-resto')) {
+			wp_insert_post([
+				'post_title'   => 'Dashboard Resto',
+				'post_name'    => 'dashboard-resto',
+				'post_status'  => 'publish',
+				'post_type'    => 'page',
+				'post_content' => '[meja_dashboard_placeholder]',
+			]);
+		}
+	
+		if (!get_page_by_path('login-resto')) {
+			wp_insert_post([
+				'post_title'   => 'Login Resto',
+				'post_name'    => 'login-resto',
+				'post_status'  => 'publish',
+				'post_type'    => 'page',
+				'post_content' => '[meja_custom_login]',
+			]);
+		}
 	}
 }
 

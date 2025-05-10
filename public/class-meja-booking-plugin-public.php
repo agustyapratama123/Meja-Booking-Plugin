@@ -55,6 +55,9 @@ class Meja_Booking_Plugin_Public {
      	add_action('wp_ajax_meja_booking_route', [$this, 'ajax_router']);
 		add_shortcode('meja_booking_app', [$this, 'render_booking_shortcode']);
 		add_shortcode('resto_dashboard', [$this, 'render_resto_dashboard']);
+		add_action('template_redirect', array($this, 'override_page_template'));
+
+		
 
 	 	// Start session if not already
 	 	add_action('init', [$this, 'start_session']);
@@ -237,6 +240,155 @@ class Meja_Booking_Plugin_Public {
 		wp_send_json_success([
 			'html' => ob_get_clean(),
 		]);
+	}
+	
+
+	public function override_page_template() {
+		// JANGAN override di wp-admin, wp-login.php, AJAX, REST API
+		if (is_admin() || defined('DOING_AJAX') || defined('REST_REQUEST')) {
+			return;
+		}
+	
+		// Hindari gangguan terhadap wp-login.php langsung
+		if (strpos($_SERVER['REQUEST_URI'], 'wp-login.php') !== false) {
+			return;
+		}
+	
+		global $post;
+	
+		if (!is_page() || !$post) return;
+	
+		$slug = $post->post_name;
+	
+		if ($slug === 'login-resto') {
+			$this->render_clean_login();
+			exit;
+		}
+	
+		if ($slug === 'dashboard-resto') {
+			if (!is_user_logged_in()) {
+				wp_redirect(home_url('/login-resto'));
+				exit;
+			}
+	
+			if (!current_user_can('admin_resto')) {
+				// Jika bukan admin_outlet, arahkan ke wp-admin
+				wp_redirect(admin_url());
+				exit;
+			}
+	
+			$this->render_clean_dashboard();
+			exit;
+		}
+	}
+	
+
+
+	// page login
+
+	public function render_clean_login() {
+	$error = '';
+
+	if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+		$creds = [
+			'user_login'    => sanitize_user($_POST['log']),
+			'user_password' => $_POST['pwd'],
+			'remember'      => isset($_POST['rememberme']),
+		];
+
+		$user = wp_signon($creds, false);
+
+		if (is_wp_error($user)) {
+			$error = 'Login gagal. Silakan periksa kembali username dan password.';
+		} else {
+			wp_set_current_user($user->ID); // Pastikan user diatur
+			wp_set_auth_cookie($user->ID);  // Set cookie manual (penting untuk custom login)
+
+			$roles = (array) $user->roles;
+
+			if (in_array('admin_resto', $roles)) {
+				wp_redirect(home_url('/dashboard-resto'));
+				exit;
+			} elseif (in_array('administrator', $roles)) {
+				wp_redirect(admin_url());
+				exit;
+			} else {
+				// Tetap di halaman login dengan error
+				wp_logout();
+				$error = 'Role Anda tidak diizinkan mengakses halaman ini.';
+			}
+		}
+	}
+
+	?>
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<title>Login Resto</title>
+		<style>
+			body { font-family: sans-serif; background: #f6f6f6; padding: 40px; }
+			.login-box { max-width: 400px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,.1); }
+		</style>
+	</head>
+	<body>
+		<div class="login-box">
+			<h2>Login Admin Resto</h2>
+			<?php if ($error) echo '<p style="color:red;">' . esc_html($error) . '</p>'; ?>
+			<form method="post">
+				<p><input type="text" name="log" placeholder="Username" required></p>
+				<p><input type="password" name="pwd" placeholder="Password" required></p>
+				<p><label><input type="checkbox" name="rememberme"> Ingat saya</label></p>
+				<p><button type="submit">Login</button></p>
+			</form>
+		</div>
+	</body>
+	</html>
+	<?php
+}
+
+	
+	// page dashboard
+
+	public function render_clean_dashboard() {
+		wp_enqueue_script(
+			'meja-dashboard-js',
+			plugin_dir_url(__FILE__) . 'js/frontend-dashboard.js',
+			['jquery'],
+			null,
+			true
+		);
+		wp_print_scripts(['jquery', 'meja-dashboard-js']);
+	
+		?>
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<title>Dashboard Resto</title>
+			<style>
+				body { font-family: sans-serif; background: #f9f9f9; padding: 30px; }
+				table { width: 100%; border-collapse: collapse; background: #fff; }
+				th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+				th { background: #eee; }
+			</style>
+		</head>
+		<body>
+			<h2>Dashboard Booking</h2>
+			<table id="booking-table">
+				<thead>
+					<tr>
+						<th>Nama</th>
+						<th>Tanggal</th>
+						<th>Jam</th>
+						<th>Jumlah</th>
+						<th>Status</th>
+						<th>Aksi</th>
+					</tr>
+				</thead>
+				<tbody></tbody>
+			</table>
+		</body>
+		</html>
+		<?php
 	}
 	
 	
