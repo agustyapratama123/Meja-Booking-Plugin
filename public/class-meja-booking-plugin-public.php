@@ -168,7 +168,80 @@ class Meja_Booking_Plugin_Public {
  	
 	public function render_booking_shortcode($atts) {
 		return '<div id="meja-booking-app"></div>';
-	}	
+	}
+
+	public function restrict_admin_for_resto() {
+		if (
+			is_user_logged_in() &&
+			current_user_can('admin_resto') &&
+			!current_user_can('administrator') &&
+			is_admin() &&
+			!defined('DOING_AJAX')
+		) {
+			wp_redirect(home_url('/resto-dashboard'));
+			exit;
+		}
+	}
+	
+
+	public function login_redirect($redirect_to, $request, $user) {
+		if (isset($user->roles) && in_array('admin_resto', $user->roles)) {
+			return home_url('/resto-dashboard');
+		}
+		return $redirect_to;
+	}
+	
+	// public function register_shortcodes() {
+	// 	add_shortcode('resto_dashboard', [$this, 'render_resto_dashboard']);
+	// }
+
+	public function render_resto_dashboard() {
+		if (!current_user_can('admin_resto')) {
+			return '<p>Akses ditolak.</p>';
+		}
+	
+		ob_start();
+		include plugin_dir_path(__FILE__) . 'views/dashboard-resto.php';
+		return ob_get_clean();
+	}
+
+	function meja_booking_force_template($template) {
+		if (is_page('resto-dashboard')) {
+			return plugin_dir_path(__FILE__) . 'templates/resto-dashboard-template.php';
+		}
+		return $template;
+	}
+	
+	public function ajax_dashboard_router() {
+		check_ajax_referer('meja_booking_ajax', 'nonce');
+	
+		if (!current_user_can('admin_resto')) {
+			wp_send_json_error(['message' => 'Akses ditolak.']);
+		}
+	
+		$page = isset($_POST['page']) ? sanitize_text_field($_POST['page']) : 'home';
+	
+		ob_start();
+	
+		switch ($page) {
+			case 'home':
+				include plugin_dir_path(__FILE__) . 'views/dashboard/home.php';
+				break;
+			case 'orders':
+				include plugin_dir_path(__FILE__) . 'views/dashboard/orders.php';
+				break;
+			case 'profile':
+				include plugin_dir_path(__FILE__) . 'views/dashboard/profile.php';
+				break;
+			default:
+				echo '<p>Halaman dashboard tidak ditemukan.</p>';
+		}
+	
+		wp_send_json_success([
+			'html' => ob_get_clean(),
+		]);
+	}
+	
 
 	public function override_page_template() {
 		// JANGAN override di wp-admin, wp-login.php, AJAX, REST API
