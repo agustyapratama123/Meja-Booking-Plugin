@@ -78,6 +78,7 @@ class Meja_Booking_Plugin {
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
+		$this->define_dashboard_admin_resto_hooks();
 
 	}
 
@@ -124,6 +125,7 @@ class Meja_Booking_Plugin {
 		 * side of the site.
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-meja-booking-plugin-public.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-meja-booking-dashboard-admin-resto.php';
 
 		$this->loader = new Meja_Booking_Plugin_Loader();
 
@@ -179,6 +181,10 @@ class Meja_Booking_Plugin {
 		$this->loader->add_filter( 'login_redirect', $plugin_public, 'restrict_admin_for_resto', 10, 3 ); // redirect role admin_resto ke dashboard custom
 		$this->loader->add_filter( 'template_include', $plugin_public, 'meja_booking_force_template');
 		$this->loader->add_action( 'wp_ajax_meja_dashboard_route', $plugin_public, 'ajax_dashboard_router' );
+
+	}
+
+	private function define_dashboard_admin_resto_hooks() {
 
 	}
 

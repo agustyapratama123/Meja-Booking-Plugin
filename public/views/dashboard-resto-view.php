@@ -95,12 +95,14 @@
     }
 
     .toggle-btn {
-      background: transparent;
+      background: #eee;
       border: none;
       color: #333;
-      font-size: 18px;
+      font-size: 24px;
       cursor: pointer;
       margin-right: 12px;
+      border-radius: 4px;
+      padding: 4px 10px;
     }
 
     @media (max-width: 768px) {
