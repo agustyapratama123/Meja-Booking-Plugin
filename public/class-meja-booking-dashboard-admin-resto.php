@@ -6,23 +6,30 @@ class Meja_Booking_Dashboard_Admin_Resto {
 
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
-        add_shortcode('dashboard_admin_resto', [$this, 'render_dashboard']);
+   
+
     }
 
-    public function render_dashboard() {
-        // Cek autentikasi dan role
-        if (!is_user_logged_in()) {
-            wp_redirect(home_url('/login-resto'));
-            exit;
-        }
-
-        $user = wp_get_current_user();
-        if (!in_array('admin_resto', (array)$user->roles)) {
-            wp_redirect(home_url());
-            exit;
-        }
-
-        // Path ke file tampilan dashboard
-        include plugin_dir_path(__FILE__) . 'views/dashboard-resto-view.php';
+   public function load_dashboard_section() {
+    if (!current_user_can('admin_resto')) {
+        wp_send_json_error('Unauthorized', 403);
     }
+
+    $section = sanitize_text_field($_POST['section']);
+    $base_path = plugin_dir_path(__FILE__) . 'views/';
+
+    switch ($section) {
+        case 'dashboard':
+        case 'tambah-menu':
+        case 'pesanan':
+            include $base_path . $section . '.php';
+            break;
+        default:
+            echo '<p>Halaman tidak ditemukan.</p>';
+            break;
+    }
+
+    wp_die();
+}
+
 }

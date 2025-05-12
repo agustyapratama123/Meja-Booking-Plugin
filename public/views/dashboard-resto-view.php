@@ -115,13 +115,14 @@
       }
     }
   </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
 
   <div class="sidebar" id="sidebar">
     <h2>Resto</h2>
-    <a href="#">Dashboard</a>
-    <a href="#">Tambah Menu</a>
+    <a href="#" id="dashboard-link">Dashboard</a>
+    <a href="#" id="tambah-menu-link">Tambah Menu</a>
     <a href="#">Kategori Menu</a>
     <a href="#">Pesanan</a>
     <a href="#">Meja</a>
@@ -145,7 +146,7 @@
     </div>
 
     <div class="content">
-      <p>Selamat datang di dashboard admin resto.</p>
+      <?php include plugin_dir_path(__FILE__) . 'dashboard-views/dashboard.php'; ?>
     </div>
   </div>
 
@@ -168,6 +169,20 @@
   window.location.href = '<?php echo wp_logout_url( home_url( '/login-resto/' ) ); ?>';
 
     }
+
+    // jQuery to handle Dashboard link click and load content via AJAX
+    jQuery(document).ready(function($) {
+      $('#dashboard-link').on('click', function(e) {
+        e.preventDefault();
+        $('.content').load('<?php echo plugin_dir_url(__FILE__); ?>../views/dashboard-views/dashboard.php');
+      });
+
+      $('#tambah-menu-link').on('click', function(e) {
+        e.preventDefault();
+        $('.content').load('<?php echo plugin_dir_url(__FILE__); ?>../views/dashboard-views/menu.php');
+      });
+
+    });
   </script>
 </body>
 </html>
